@@ -1328,14 +1328,26 @@ function renderMeals(){
   if(!S.meals.length){list.innerHTML=empty('Nothing logged yet');return;}
   list.innerHTML='';
   var qualityEmoji={clean:'🥦',moderate:'⚖️',cheat:'🍕'};
-  S.meals.slice().reverse().forEach(function(m){
+  S.meals.slice().reverse().forEach(function(m,ri){
+    var i=S.meals.length-1-ri;
     var d=document.createElement('div');d.className='log-item';
-    var desc=m.desc&&m.desc.length>30?m.desc.slice(0,30)+'…':m.desc||'Unnamed';
+    var desc=m.desc&&m.desc.length>28?m.desc.slice(0,28)+'…':m.desc||'Unnamed';
     var portionStr=m.portion?' · '+m.portion:'';
     var qualStr=m.quality&&qualityEmoji[m.quality]?' '+qualityEmoji[m.quality]:'';
-    d.innerHTML='<span class="log-item-l">'+m.type+qualStr+' · '+desc+portionStr+'</span><span class="log-item-r">'+(m.cal?m.cal.toLocaleString()+' kcal':'—')+(m.prot?' · '+m.prot+'g':'')+'<br>'+m.time+'</span>';
+    d.innerHTML='<span class="log-item-l">'+m.type+qualStr+' · '+desc+portionStr+'</span>'
+      +'<span class="log-item-r" style="display:flex;align-items:center;gap:10px">'
+      +'<span>'+(m.cal?m.cal.toLocaleString()+' kcal':'—')+(m.prot?' · '+m.prot+'g':'')+'<br>'+m.time+'</span>'
+      +'<button onclick="deleteMeal('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Delete">✕</button>'
+      +'</span>';
     list.appendChild(d);
   });
+}
+function deleteMeal(i){
+  var m=S.meals[i];
+  S.consumed=Math.max(0,S.consumed-(m.cal||0));
+  S.protein=Math.max(0,S.protein-(m.prot||0));
+  S.meals.splice(i,1);
+  renderMeals();updateToday();save();
 }
 
 // ── SUPPLEMENTS
@@ -1348,11 +1360,19 @@ function renderSupplements(){
   list.innerHTML='';
   S.supplements.forEach(function(s,i){
     var div=document.createElement('div');div.className='supp-item'+(s.taken?' checked':'');
-    div.onclick=function(){S.supplements[i].taken=!S.supplements[i].taken;renderSupplements();updateToday();save();};
-    div.innerHTML='<div class="supp-left"><div class="supp-check">✓</div><div class="supp-name">'+s.name+'</div></div><div class="supp-status">'+(s.taken?'Taken ✓':'Tap to mark taken')+'</div>';
+    div.innerHTML='<div class="supp-left" style="cursor:pointer" onclick="toggleSupp('+i+')">'
+      +'<div class="supp-check">✓</div>'
+      +'<div class="supp-name">'+s.name+'</div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<span class="supp-status">'+(s.taken?'Taken ✓':'Tap to mark taken')+'</span>'
+      +'<button onclick="deleteSupp('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Remove">✕</button>'
+      +'</div>';
     list.appendChild(div);
   });
 }
+function toggleSupp(i){S.supplements[i].taken=!S.supplements[i].taken;renderSupplements();updateToday();save();}
+function deleteSupp(i){S.supplements.splice(i,1);renderSupplements();updateToday();save();}
 function toggleCreatine(){S.creatineTaken=!S.creatineTaken;updateCreatineUI();updateToday();save();}
 function updateCreatineUI(){
   var item=document.getElementById('creatine-item'),status=document.getElementById('creatine-status'),name=document.getElementById('creatine-name');
@@ -1374,11 +1394,24 @@ function logRun(){
 }
 function renderRuns(){
   var list=document.getElementById('run-list');if(!S.runs.length){list.innerHTML=empty('Nothing logged yet');return;}
-  list.innerHTML='';S.runs.slice().reverse().forEach(function(r){
+  list.innerHTML='';S.runs.slice().reverse().forEach(function(r,ri){
+    var i=S.runs.length-1-ri;
     var d=document.createElement('div');d.className='log-item';
-    d.innerHTML='<span class="log-item-l">Run'+(r.dist?' · '+r.dist+' mi':'')+'</span><span class="log-item-r">'+r.dur+' min'+(r.cal?' · '+r.cal.toLocaleString()+' kcal':'')+'<br>'+r.time+'</span>';
+    d.innerHTML='<span class="log-item-l">Run'+(r.dist?' · '+r.dist+' mi':'')+'</span>'
+      +'<span class="log-item-r" style="display:flex;align-items:center;gap:10px">'
+      +'<span>'+r.dur+' min'+(r.cal?' · '+r.cal.toLocaleString()+' kcal':'')+'<br>'+r.time+'</span>'
+      +'<button onclick="deleteRun('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Delete">✕</button>'
+      +'</span>';
     list.appendChild(d);
   });
+}
+function deleteRun(i){
+  var r=S.runs[i];
+  S.burned=Math.max(0,S.burned-(r.cal||0));
+  S.exCount=Math.max(0,S.exCount-1);
+  S.exTime=Math.max(0,S.exTime-(r.dur||0));
+  S.runs.splice(i,1);
+  renderRuns();updateToday();save();
 }
 ['r-dist','r-dur'].forEach(function(id){
   document.getElementById(id).addEventListener('input',function(){
@@ -1396,12 +1429,25 @@ function logSport(){
 }
 function renderSports(){
   var list=document.getElementById('sport-list');if(!S.sports.length){list.innerHTML=empty('Nothing logged yet');return;}
-  list.innerHTML='';S.sports.slice().reverse().forEach(function(s){
+  list.innerHTML='';S.sports.slice().reverse().forEach(function(s,ri){
+    var i=S.sports.length-1-ri;
     var d=document.createElement('div');d.className='log-item';
     var label=s.sport.charAt(0).toUpperCase()+s.sport.slice(1);
-    d.innerHTML='<span class="log-item-l">'+label+(s.notes?' · '+s.notes:'')+(s.temp?' · '+s.temp+'°F':'')+'</span><span class="log-item-r">'+s.dur+' min'+(s.cal?' · '+s.cal.toLocaleString()+' kcal':'')+'<br>'+s.time+'</span>';
+    d.innerHTML='<span class="log-item-l">'+label+(s.notes?' · '+s.notes:'')+(s.temp?' · '+s.temp+'°F':'')+'</span>'
+      +'<span class="log-item-r" style="display:flex;align-items:center;gap:10px">'
+      +'<span>'+s.dur+' min'+(s.cal?' · '+s.cal.toLocaleString()+' kcal':'')+'<br>'+s.time+'</span>'
+      +'<button onclick="deleteSport('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Delete">✕</button>'
+      +'</span>';
     list.appendChild(d);
   });
+}
+function deleteSport(i){
+  var s=S.sports[i];
+  S.burned=Math.max(0,S.burned-(s.cal||0));
+  S.exCount=Math.max(0,S.exCount-1);
+  S.exTime=Math.max(0,S.exTime-(s.dur||0));
+  S.sports.splice(i,1);
+  renderSports();updateToday();save();
 }
 
 // ── STRENGTH PROGRESSION
@@ -1421,9 +1467,19 @@ function renderProgressionForm(){
     var last=hist.length?hist[hist.length-1]:null;
     var arrow=trendArrow(hist);
     var histHTML='';
-    hist.slice(-4).reverse().forEach(function(e){
+    hist.slice(-4).reverse().forEach(function(e,ri){
+      var hi=hist.length-1-(hist.length>4?hist.length-4:0)-ri;
+      // actual index in full hist array
+      var actualIdx=hist.length-1-ri;
+      if(hist.length>4) actualIdx=hist.length-4+( (hist.slice(-4).length-1) - ri );
       var isPR=+e.weight===best&&best!==null;
-      histHTML+='<div class="strength-hist-item"><span>'+(isPR?'<span class="pr-badge">★ PR</span>':'')+e.date+'</span><span>'+e.weight+' '+ex.unit+' × '+e.reps+' reps'+(e.notes?' — '+e.notes:'')+'</span></div>';
+      histHTML+='<div class="strength-hist-item">'
+        +'<span>'+(isPR?'<span class="pr-badge">★ PR</span>':'')+e.date+'</span>'
+        +'<span style="display:flex;align-items:center;gap:8px">'
+        +'<span>'+e.weight+' '+ex.unit+' × '+e.reps+' reps'+(e.notes?' — '+e.notes:'')+'</span>'
+        +'<button onclick="deleteProgEntry(\''+ex.key+'\','+actualIdx+')" style="background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;padding:1px 3px;line-height:1" title="Delete">✕</button>'
+        +'</span>'
+        +'</div>';
     });
     var div=document.createElement('div');div.className='strength-ex';
     div.innerHTML='<div class="strength-ex-head"><span class="strength-ex-name">'+ex.label+arrow+'</span><span class="strength-ex-best">'+(best!==null?'Best: '+best+' '+ex.unit:'No entries yet')+'</span></div>'
@@ -1443,6 +1499,10 @@ function logProgression(){
     if(w&&r){S.progression[ex.key].push({weight:+w,reps:+r,notes:document.getElementById('wl-'+ex.key+'-n').value,date:today});any=true;}
   });
   if(!any){alert('Please fill in at least one exercise.');return;}
+  renderProgressionForm();save();
+}
+function deleteProgEntry(key,i){
+  S.progression[key].splice(i,1);
   renderProgressionForm();save();
 }
 
@@ -1504,12 +1564,21 @@ function renderHealthSummary(){
 }
 function renderHealthList(){
   var list=document.getElementById('health-list');if(!S.health.length){list.innerHTML=empty('Nothing logged yet');return;}
-  list.innerHTML='';S.health.slice().reverse().forEach(function(h){
+  list.innerHTML='';S.health.slice().reverse().forEach(function(h,ri){
+    var i=S.health.length-1-ri;
     var d=document.createElement('div');d.className='log-item';
     var left=(h.wt?h.wt+' lbs':'—')+(h.sl?' · '+h.sl+'h sleep':'')+(h.waist?' · '+h.waist+'" waist':'');
-    d.innerHTML='<span class="log-item-l">'+left+'</span><span class="log-item-r">'+h.date+'</span>';
+    d.innerHTML='<span class="log-item-l">'+left+'</span>'
+      +'<span class="log-item-r" style="display:flex;align-items:center;gap:10px">'
+      +'<span>'+h.date+'</span>'
+      +'<button onclick="deleteHealth('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Delete">✕</button>'
+      +'</span>';
     list.appendChild(d);
   });
+}
+function deleteHealth(i){
+  S.health.splice(i,1);
+  renderHealthSummary();renderHealthList();renderDotTimeline();save();
 }
 
 function renderDotTimeline(){
