@@ -895,6 +895,21 @@
         </svg>
         Log a Run
       </div>
+      <!-- Indoor / Outdoor toggle -->
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button id="run-outdoor-btn" onclick="setRunLocation('outdoor')"
+          style="flex:1;padding:8px;font-family:'Crimson Text',serif;font-size:13px;font-weight:600;border-radius:var(--radius-md);border:1px solid var(--maroon);background:var(--maroon);color:#FDF7EC;cursor:pointer;transition:all 0.15s">
+          🌤 Outdoor
+        </button>
+        <button id="run-indoor-btn" onclick="setRunLocation('indoor')"
+          style="flex:1;padding:8px;font-family:'Crimson Text',serif;font-size:13px;font-weight:600;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface-2);color:var(--text-secondary);cursor:pointer;transition:all 0.15s">
+          🏃 Indoor / Treadmill
+        </button>
+      </div>
+      <div class="weather-pill" id="run-weather-pill">
+        <div class="weather-dot" id="run-weather-dot"></div>
+        <span id="run-weather-text">Fetching Key Biscayne temperature…</span>
+      </div>
       <div class="field-group grid-2">
         <div class="field"><label>Distance (miles)</label><input type="number" id="r-dist" placeholder="e.g. 3.5" step="0.1"></div>
         <div class="field"><label>Time (minutes)</label><input type="number" id="r-dur" placeholder="e.g. 35"></div>
@@ -961,6 +976,7 @@
         <div class="field">
           <label>Location <span style="font-size:10px;color:var(--text-muted);font-style:italic">(change if traveling)</span></label>
           <select id="sport-loc" onchange="onLocChange()">
+            <option value="keybiscayne">Key Biscayne, FL</option>
             <option value="miami">Miami, FL</option>
             <option value="nyc">New York, NY</option>
             <option value="la">Los Angeles, CA</option>
@@ -1119,7 +1135,7 @@ var S={
 };
 var currentTemp=null,manualMode=false;
 var sportRates={tennis:6.5,soccer:7.5};
-var locCoords={miami:{lat:25.77,lon:-80.19},nyc:{lat:40.71,lon:-74.01},la:{lat:34.05,lon:-118.24},chicago:{lat:41.88,lon:-87.63}};
+var locCoords={keybiscayne:{lat:25.6908,lon:-80.1628},miami:{lat:25.77,lon:-80.19},nyc:{lat:40.71,lon:-74.01},la:{lat:34.05,lon:-118.24},chicago:{lat:41.88,lon:-87.63}};
 var wlDefs=[{key:'pullup',label:'Pull ups',unit:'lbs added'},{key:'dip',label:'Dips',unit:'lbs added'}];
 
 // Sport SVG icons
@@ -1233,6 +1249,22 @@ function updateToday(){
 }
 
 // ── WEATHER
+var runIsOutdoor=true;
+function setRunLocation(type){
+  runIsOutdoor=(type==='outdoor');
+  var outBtn=document.getElementById('run-outdoor-btn');
+  var inBtn=document.getElementById('run-indoor-btn');
+  var pill=document.getElementById('run-weather-pill');
+  if(runIsOutdoor){
+    outBtn.style.background='var(--maroon)';outBtn.style.color='#FDF7EC';outBtn.style.borderColor='var(--maroon)';
+    inBtn.style.background='var(--surface-2)';inBtn.style.color='var(--text-secondary)';inBtn.style.borderColor='var(--border)';
+    pill.style.display='inline-flex';
+  } else {
+    inBtn.style.background='var(--maroon)';inBtn.style.color='#FDF7EC';inBtn.style.borderColor='var(--maroon)';
+    outBtn.style.background='var(--surface-2)';outBtn.style.color='var(--text-secondary)';outBtn.style.borderColor='var(--border)';
+    pill.style.display='none';
+  }
+}
 function fetchWeather(){
   var loc=document.getElementById('sport-loc').value;
   if(loc==='other') return;
@@ -1241,11 +1273,31 @@ function fetchWeather(){
     .then(function(r){return r.json();})
     .then(function(d){
       currentTemp=Math.round(d.current_weather.temperature);
+      // Sport weather pill
       var dot=document.getElementById('weather-dot'),txt=document.getElementById('weather-text');
       txt.textContent='Currently '+currentTemp+'°F outside';
       dot.className='weather-dot'+(currentTemp>=92?' hot':currentTemp>=80?' warm':'');
+      // Run weather pill (always uses Key Biscayne)
+      var rdot=document.getElementById('run-weather-dot'),rtxt=document.getElementById('run-weather-text');
+      rtxt.textContent='Currently '+currentTemp+'°F in Key Biscayne';
+      rdot.className='weather-dot'+(currentTemp>=92?' hot':currentTemp>=80?' warm':'');
       updateSportEst();
-    }).catch(function(){document.getElementById('weather-text').textContent='Could not fetch — using base estimate';currentTemp=null;});
+    }).catch(function(){
+      document.getElementById('weather-text').textContent='Could not fetch — using base estimate';
+      document.getElementById('run-weather-text').textContent='Could not fetch temperature';
+      currentTemp=null;
+    });
+  // Also separately fetch Key Biscayne for run weather if sport loc is different
+  if(loc!=='keybiscayne'){
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=25.6908&longitude=-80.1628&current_weather=true&temperature_unit=fahrenheit')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var kb=Math.round(d.current_weather.temperature);
+        var rdot=document.getElementById('run-weather-dot'),rtxt=document.getElementById('run-weather-text');
+        rtxt.textContent='Currently '+kb+'°F in Key Biscayne';
+        rdot.className='weather-dot'+(kb>=92?' hot':kb>=80?' warm':'');
+      }).catch(function(){});
+  }
 }
 function onLocChange(){
   var loc=document.getElementById('sport-loc').value;
@@ -1289,11 +1341,34 @@ async function estimateMeal(){
   box.classList.add('show');note.textContent='Analyzing your meal…';
   try{
     var content=[];
-    if(photo){var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(photo);});content.push({type:'image',source:{type:'base64',media_type:photo.type||'image/jpeg',data:b64}});}
+    if(photo){
+      var b64=await new Promise(function(res,rej){
+        var r=new FileReader();
+        r.onload=function(){res(r.result.split(',')[1]);};
+        r.onerror=rej;
+        r.readAsDataURL(photo);
+      });
+      content.push({type:'image',source:{type:'base64',media_type:photo.type||'image/jpeg',data:b64}});
+    }
     var portion=document.getElementById('m-portion').value.trim();
     var portionNote=portion?', portion/serving size: '+portion:'';
     content.push({type:'text',text:'Estimate the nutritional content of this meal'+(desc?': '+desc:'')+portionNote+'. Return ONLY valid JSON with keys: calories (number), protein (number in grams), carbs (number in grams), note (one concise sentence). No markdown, no extra text.'});
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:content}]})});
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:300,
+        messages:[{role:'user',content:content}]
+      })
+    });
+    if(!resp.ok){
+      var errText=await resp.text();
+      throw new Error('API error '+resp.status+': '+errText);
+    }
     var data=await resp.json();
     var txt=data.content.filter(function(c){return c.type==='text';}).map(function(c){return c.text;}).join('');
     var parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
@@ -1302,8 +1377,10 @@ async function estimateMeal(){
     document.getElementById('m-carbs').value=parsed.carbs||'';
     note.textContent=parsed.note||'Estimate complete — adjust if needed.';
   }catch(e){
-    note.textContent='Could not estimate. Describe in more detail or enter manually.';
+    console.error('Meal estimate error:',e);
+    note.textContent='Could not estimate right now. Enter the numbers manually below.';
     ['m-cal','m-prot','m-carbs'].forEach(function(id){document.getElementById(id).value='';});
+    if(!manualMode) toggleManual();
   }
   btn.disabled=false;btn.textContent='✦ Estimate with AI';
 }
@@ -1388,7 +1465,7 @@ function logRun(){
   var dist=+document.getElementById('r-dist').value,dur=+document.getElementById('r-dur').value,cal=+document.getElementById('r-cal').value||0;
   if(!dur){alert('Please enter a duration.');return;}
   S.burned+=cal;S.exCount++;S.exTime+=dur;
-  S.runs.push({dist,dur,cal,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+  S.runs.push({dist,dur,cal,outdoor:runIsOutdoor,temp:runIsOutdoor?currentTemp:null,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
   ['r-dist','r-dur','r-cal'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('r-pace').value='';
   renderRuns();updateToday();save();
 }
@@ -1397,7 +1474,8 @@ function renderRuns(){
   list.innerHTML='';S.runs.slice().reverse().forEach(function(r,ri){
     var i=S.runs.length-1-ri;
     var d=document.createElement('div');d.className='log-item';
-    d.innerHTML='<span class="log-item-l">Run'+(r.dist?' · '+r.dist+' mi':'')+'</span>'
+    var locStr=r.outdoor===false?' · Treadmill':r.temp?' · '+r.temp+'°F':'';
+    d.innerHTML='<span class="log-item-l">Run'+(r.dist?' · '+r.dist+' mi':'')+locStr+'</span>'
       +'<span class="log-item-r" style="display:flex;align-items:center;gap:10px">'
       +'<span>'+r.dur+' min'+(r.cal?' · '+r.cal.toLocaleString()+' kcal':'')+'<br>'+r.time+'</span>'
       +'<button onclick="deleteRun('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Delete">✕</button>'
