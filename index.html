@@ -680,10 +680,85 @@
       </div>
       <p class="hint" style="margin-top:10px;text-align:center">Builds as you log each day</p>
     </div>
+
+    <!-- FASTING TRACKER -->
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px">
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px">Fasting since last meal</div>
+        <div style="font-size:13px;color:var(--text-secondary);font-style:italic" id="fast-sub">Log a meal to start tracking</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:400;color:var(--text-primary);line-height:1" id="fast-display">—</div>
+        <div style="font-size:11px;color:var(--text-muted);font-style:italic">hours</div>
+      </div>
+    </div>
   </div>
 
   <!-- ══ NUTRITION ══ -->
   <div class="section" id="tab-nutrition">
+
+    <!-- MACRO BUBBLES -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:4px">Today's macros</div>
+      <p class="hint" style="margin-bottom:16px;margin-top:0">Fills as you log meals — aim to hit each ring by end of day</p>
+      <div style="display:flex;justify-content:space-around;align-items:flex-end;padding:8px 0 4px">
+
+        <!-- PROTEIN bubble -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--maroon)">Protein</div>
+          <div style="position:relative;width:90px;height:90px">
+            <svg width="90" height="90" viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="38" fill="none" stroke="var(--surface-2)" stroke-width="8"/>
+              <circle id="macro-prot-ring" cx="45" cy="45" r="38" fill="none" stroke="var(--maroon)" stroke-width="8"
+                stroke-dasharray="238.76" stroke-dashoffset="238.76" stroke-linecap="round"
+                transform="rotate(-90 45 45)" style="transition:stroke-dashoffset 0.5s ease"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <span id="macro-prot-val" style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--text-primary);line-height:1">0</span>
+              <span style="font-size:9px;color:var(--text-muted);font-style:italic">/ 160g</span>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--text-secondary);font-style:italic">~40g / meal</div>
+        </div>
+
+        <!-- CARBS bubble -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold)">Carbs</div>
+          <div style="position:relative;width:90px;height:90px">
+            <svg width="90" height="90" viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="38" fill="none" stroke="var(--surface-2)" stroke-width="8"/>
+              <circle id="macro-carbs-ring" cx="45" cy="45" r="38" fill="none" stroke="var(--gold)" stroke-width="8"
+                stroke-dasharray="238.76" stroke-dashoffset="238.76" stroke-linecap="round"
+                transform="rotate(-90 45 45)" style="transition:stroke-dashoffset 0.5s ease"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <span id="macro-carbs-val" style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--text-primary);line-height:1">0</span>
+              <span style="font-size:9px;color:var(--text-muted);font-style:italic">/ 255g</span>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--text-secondary);font-style:italic">255g target</div>
+        </div>
+
+        <!-- FATS bubble -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary)">Fats</div>
+          <div style="position:relative;width:90px;height:90px">
+            <svg width="90" height="90" viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="38" fill="none" stroke="var(--surface-2)" stroke-width="8"/>
+              <circle id="macro-fat-ring" cx="45" cy="45" r="38" fill="none" stroke="var(--tan)" stroke-width="8"
+                stroke-dasharray="238.76" stroke-dashoffset="238.76" stroke-linecap="round"
+                transform="rotate(-90 45 45)" style="transition:stroke-dashoffset 0.5s ease"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <span id="macro-fat-val" style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--text-primary);line-height:1">0</span>
+              <span style="font-size:9px;color:var(--text-muted);font-style:italic">/ 75g</span>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--text-secondary);font-style:italic">75g target</div>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-title">Daily Grub</div>
       <div class="field-group grid-2">
@@ -717,24 +792,30 @@
           <label>When?</label>
           <select id="m-type"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select>
         </div>
+        <div class="field">
+          <label>Time eaten</label>
+          <input type="time" id="m-time">
+        </div>
       </div>
       <div class="field-group" style="display:flex;justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" id="ai-btn" onclick="estimateMeal()">✦ Estimate with AI</button>
       </div>
       <div class="ai-box" id="ai-box">
         <div class="ai-note" id="ai-note"></div>
-        <div class="grid-3 field-group">
+        <div class="grid-3 field-group" style="grid-template-columns:1fr 1fr 1fr 1fr">
           <div class="field"><label>Calories</label><input type="number" id="m-cal" placeholder="kcal"></div>
           <div class="field"><label>Protein (g)</label><input type="number" id="m-prot" placeholder="g"></div>
           <div class="field"><label>Carbs (g)</label><input type="number" id="m-carbs" placeholder="g"></div>
+          <div class="field"><label>Fats (g)</label><input type="number" id="m-fat" placeholder="g"></div>
         </div>
         <p class="hint">Estimates — adjust before saving if needed.</p>
       </div>
       <div id="manual-box" style="display:none">
-        <div class="grid-3 field-group mt-12">
+        <div class="field-group mt-12" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
           <div class="field"><label>Calories</label><input type="number" id="m-cal-m" placeholder="kcal"></div>
           <div class="field"><label>Protein (g)</label><input type="number" id="m-prot-m" placeholder="g"></div>
           <div class="field"><label>Carbs (g)</label><input type="number" id="m-carbs-m" placeholder="g"></div>
+          <div class="field"><label>Fats (g)</label><input type="number" id="m-fat-m" placeholder="g"></div>
         </div>
       </div>
       <div class="btn-row">
@@ -1128,17 +1209,17 @@ var K={profile:'ht_profile',date:'ht_today_date',log:'ht_today_log',supps:'ht_su
 // ── STATE
 var S={
   profile:null,supplements:[],creatineTaken:false,health:[],
-  consumed:0,burned:0,protein:0,exCount:0,exTime:0,
-  meals:[],runs:[],sports:[],water:0,
+  consumed:0,burned:0,protein:0,carbs:0,fat:0,exCount:0,exTime:0,
+  meals:[],runs:[],sports:[],water:0,lastMealTime:null,
   progression:{pullup:[],dip:[]},
-  dailyHistory:[]  // [{date,netCal,workouts,sleep}] — one entry per day
+  dailyHistory:[]
 };
+var MACROS={protein:160,carbs:255,fat:75};
 var currentTemp=null,manualMode=false;
 var sportRates={tennis:6.5,soccer:7.5};
 var locCoords={keybiscayne:{lat:25.6908,lon:-80.1628},miami:{lat:25.77,lon:-80.19},nyc:{lat:40.71,lon:-74.01},la:{lat:34.05,lon:-118.24},chicago:{lat:41.88,lon:-87.63}};
 var wlDefs=[{key:'pullup',label:'Pull ups',unit:'lbs added'},{key:'dip',label:'Dips',unit:'lbs added'}];
 
-// Sport SVG icons
 var sportIcons={
   tennis:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--maroon)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="10" cy="10" rx="6" ry="6" transform="rotate(-45 10 10)"/><line x1="14.2" y1="14.2" x2="20" y2="20"/><line x1="7" y1="10" x2="13" y2="10"/><line x1="10" y1="7" x2="10" y2="13"/></svg>',
   soccer:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--maroon)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3c0 0-2 3-2 6s2 6 2 6"/><path d="M12 3c0 0 2 3 2 6s-2 6-2 6"/><path d="M3 12h18"/><path d="M5 7l3 2M16 7l-3 2M5 17l3-2M16 17l-3-2"/></svg>'
@@ -1154,14 +1235,12 @@ function save(){
     localStorage.setItem(K.creatine,JSON.stringify({taken:S.creatineTaken,date:todayStr()}));
     localStorage.setItem(K.health,JSON.stringify(S.health));
     localStorage.setItem(K.date,todayStr());
-    localStorage.setItem(K.log,JSON.stringify({consumed:S.consumed,burned:S.burned,protein:S.protein,exCount:S.exCount,exTime:S.exTime,meals:S.meals,runs:S.runs,sports:S.sports,water:S.water}));
+    localStorage.setItem(K.log,JSON.stringify({consumed:S.consumed,burned:S.burned,protein:S.protein,carbs:S.carbs,fat:S.fat,exCount:S.exCount,exTime:S.exTime,meals:S.meals,runs:S.runs,sports:S.sports,water:S.water,lastMealTime:S.lastMealTime}));
     localStorage.setItem(K.prog,JSON.stringify(S.progression));
-    // snapshot today into dailyHistory
     var todayEntry={date:todayStr(),netCal:S.consumed-S.burned,workouts:S.exCount,meals:S.meals.length};
     var existing=S.dailyHistory.findIndex(function(e){return e.date===todayStr();});
     if(existing>=0) S.dailyHistory[existing]=todayEntry;
     else S.dailyHistory.push(todayEntry);
-    // keep last 90 days max
     if(S.dailyHistory.length>90) S.dailyHistory=S.dailyHistory.slice(-90);
     localStorage.setItem(K.history,JSON.stringify(S.dailyHistory));
     var el=document.getElementById('save-flash');el.classList.add('show');setTimeout(function(){el.classList.remove('show');},1500);
@@ -1180,7 +1259,11 @@ function load(){
     S.creatineTaken=false;
   } else {
     try{var c=localStorage.getItem(K.creatine);if(c){var cd=JSON.parse(c);S.creatineTaken=cd.date===today?cd.taken:false;}}catch(e){}
-    try{var tl=localStorage.getItem(K.log);if(tl){var d=JSON.parse(tl);S.consumed=d.consumed||0;S.burned=d.burned||0;S.protein=d.protein||0;S.exCount=d.exCount||0;S.exTime=d.exTime||0;S.meals=d.meals||[];S.runs=d.runs||[];S.sports=d.sports||[];S.water=d.water||0;}}catch(e){}
+    try{var tl=localStorage.getItem(K.log);if(tl){var d=JSON.parse(tl);S.consumed=d.consumed||0;S.burned=d.burned||0;S.protein=d.protein||0;S.carbs=d.carbs||0;S.fat=d.fat||0;S.exCount=d.exCount||0;S.exTime=d.exTime||0;S.meals=d.meals||[];S.runs=d.runs||[];S.sports=d.sports||[];S.water=d.water||0;S.lastMealTime=d.lastMealTime||null;}}catch(e){}
+  }
+  // Auto-load Rod's profile if none saved yet
+  if(!S.profile){
+    S.profile={bmr:1780,tdee:2760,goal:2450,age:23,sex:'m',ht:70,wt:157.5,act:1.55,def:300};
   }
 }
 
@@ -1246,6 +1329,8 @@ function updateToday(){
   document.getElementById('ex-time').innerHTML=S.exTime+'<span class="metric-unit">min</span>';
   updateStreak();
   update7DaySummary();
+  updateMacroBubbles();
+  updateFasting();
 }
 
 // ── WEATHER
@@ -1352,29 +1437,21 @@ async function estimateMeal(){
     }
     var portion=document.getElementById('m-portion').value.trim();
     var portionNote=portion?', portion/serving size: '+portion:'';
-    content.push({type:'text',text:'Estimate the nutritional content of this meal'+(desc?': '+desc:'')+portionNote+'. Return ONLY valid JSON with keys: calories (number), protein (number in grams), carbs (number in grams), note (one concise sentence). No markdown, no extra text.'});
+    content.push({type:'text',text:'Estimate the nutritional content of this meal'+(desc?': '+desc:'')+portionNote+'. Return ONLY valid JSON with keys: calories (number), protein (number in grams), carbs (number in grams), fat (number in grams), note (one concise sentence). No markdown, no extra text.'});
     var resp=await fetch('https://restless-mountain-ddf7.rodrigilly02.workers.dev',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-5',
-        max_tokens:300,
-        messages:[{role:'user',content:content}]
-      })
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:300,messages:[{role:'user',content:content}]})
     });
-    if(!resp.ok){
-      var errText=await resp.text();
-      throw new Error('API error '+resp.status+': '+errText);
-    }
+    if(!resp.ok){var errText=await resp.text();throw new Error('API error '+resp.status+': '+errText);}
     var data=await resp.json();
-    // Handle both direct API response and wrapped response
-    var content=data.content||[];
-    if(!content.length) throw new Error('Empty response: '+JSON.stringify(data));
-    var txt=content.filter(function(c){return c.type==='text';}).map(function(c){return c.text;}).join('');
+    var contentArr=data.content||[];
+    if(!contentArr.length) throw new Error('Empty response: '+JSON.stringify(data));
+    var txt=contentArr.filter(function(c){return c.type==='text';}).map(function(c){return c.text;}).join('');
     var parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
     document.getElementById('m-cal').value=parsed.calories||'';
     document.getElementById('m-prot').value=parsed.protein||'';
     document.getElementById('m-carbs').value=parsed.carbs||'';
+    document.getElementById('m-fat').value=parsed.fat||'';
     note.textContent=parsed.note||'Estimate complete — adjust if needed.';
   }catch(e){
     console.error('Meal estimate error:',e);
@@ -1390,13 +1467,28 @@ function logMeal(){
   var quality=document.getElementById('m-quality').value;
   var cal=manualMode?+document.getElementById('m-cal-m').value||0:+document.getElementById('m-cal').value||0;
   var prot=manualMode?+document.getElementById('m-prot-m').value||0:+document.getElementById('m-prot').value||0;
+  var carbs=manualMode?+document.getElementById('m-carbs-m').value||0:+document.getElementById('m-carbs').value||0;
+  var fat=manualMode?+document.getElementById('m-fat-m').value||0:+document.getElementById('m-fat').value||0;
   var type=document.getElementById('m-type').value;
+  var mtime=document.getElementById('m-time').value;
   if(!desc&&!cal){alert('Please describe your meal or enter calories.');return;}
-  S.consumed+=cal;S.protein+=prot;
-  S.meals.push({desc,portion,quality,cal,prot,type,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+  // Use custom time if provided, else current time
+  var timeStr=mtime||new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  // Record lastMealTime as timestamp for fasting calculation
+  if(mtime){
+    var today=new Date();
+    var parts=mtime.split(':');
+    today.setHours(+parts[0],+parts[1],0,0);
+    S.lastMealTime=today.getTime();
+  } else {
+    S.lastMealTime=Date.now();
+  }
+  S.consumed+=cal;S.protein+=prot;S.carbs+=carbs;S.fat+=fat;
+  S.meals.push({desc,portion,quality,cal,prot,carbs,fat,type,time:timeStr});
   document.getElementById('m-desc').value='';document.getElementById('m-photo').value='';
   document.getElementById('m-portion').value='';document.getElementById('m-quality').value='';
-  ['m-cal','m-prot','m-carbs','m-cal-m','m-prot-m','m-carbs-m'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('m-time').value='';
+  ['m-cal','m-prot','m-carbs','m-fat','m-cal-m','m-prot-m','m-carbs-m','m-fat-m'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('ai-box').classList.remove('show');
   renderMeals();updateToday();save();
 }
@@ -1411,9 +1503,12 @@ function renderMeals(){
     var desc=m.desc&&m.desc.length>28?m.desc.slice(0,28)+'…':m.desc||'Unnamed';
     var portionStr=m.portion?' · '+m.portion:'';
     var qualStr=m.quality&&qualityEmoji[m.quality]?' '+qualityEmoji[m.quality]:'';
+    var macroStr=(m.prot?m.prot+'p ':'')+(m.carbs?m.carbs+'c ':'')+(m.fat?m.fat+'f':'');
     d.innerHTML='<span class="log-item-l">'+m.type+qualStr+' · '+desc+portionStr+'</span>'
       +'<span class="log-item-r" style="display:flex;align-items:center;gap:10px">'
-      +'<span>'+(m.cal?m.cal.toLocaleString()+' kcal':'—')+(m.prot?' · '+m.prot+'g':'')+'<br>'+m.time+'</span>'
+      +'<span style="text-align:right">'+(m.cal?m.cal.toLocaleString()+' kcal':'—')+'<br>'
+      +'<span style="font-size:10px;color:var(--text-muted)">'+macroStr+'</span>'
+      +' '+m.time+'</span>'
       +'<button onclick="deleteMeal('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Delete">✕</button>'
       +'</span>';
     list.appendChild(d);
@@ -1423,7 +1518,11 @@ function deleteMeal(i){
   var m=S.meals[i];
   S.consumed=Math.max(0,S.consumed-(m.cal||0));
   S.protein=Math.max(0,S.protein-(m.prot||0));
+  S.carbs=Math.max(0,S.carbs-(m.carbs||0));
+  S.fat=Math.max(0,S.fat-(m.fat||0));
   S.meals.splice(i,1);
+  // recalculate lastMealTime from remaining meals
+  if(S.meals.length===0) S.lastMealTime=null;
   renderMeals();updateToday();save();
 }
 
@@ -1747,6 +1846,36 @@ function renderDotTimeline(){
   });
 }
 
+// ── MACRO BUBBLES
+function updateMacroBubbles(){
+  var circ=238.76;
+  function setRing(ringId,valId,current,target){
+    var pct=Math.min(1,current/target);
+    var offset=circ-(pct*circ);
+    var ring=document.getElementById(ringId);
+    var val=document.getElementById(valId);
+    if(ring) ring.style.strokeDashoffset=offset;
+    if(val) val.textContent=Math.round(current);
+  }
+  setRing('macro-prot-ring','macro-prot-val',S.protein,MACROS.protein);
+  setRing('macro-carbs-ring','macro-carbs-val',S.carbs,MACROS.carbs);
+  setRing('macro-fat-ring','macro-fat-val',S.fat,MACROS.fat);
+}
+
+// ── FASTING TRACKER
+function updateFasting(){
+  var display=document.getElementById('fast-display');
+  var sub=document.getElementById('fast-sub');
+  if(!display||!sub) return;
+  if(!S.lastMealTime){display.textContent='—';sub.textContent='Log a meal to start tracking';return;}
+  var hrs=(Date.now()-S.lastMealTime)/3600000;
+  display.textContent=hrs.toFixed(1);
+  if(hrs<4) sub.textContent='Recently eaten — digesting';
+  else if(hrs<8) sub.textContent='Light fast in progress';
+  else if(hrs<12) sub.textContent='Good fasting window';
+  else sub.textContent='Extended fast — consider eating soon';
+}
+
 // ── STREAK
 function updateStreak(){
   // Count consecutive days (ending today) that have at least one meal logged
@@ -1811,7 +1940,7 @@ function editProfile(){
 function restoreProfileUI(){if(!S.profile) return;document.getElementById('p-bmr').textContent=S.profile.bmr.toLocaleString();document.getElementById('p-goal').textContent=S.profile.goal.toLocaleString();document.getElementById('profile-display').style.display='block';document.getElementById('profile-form').style.display='none';}
 function resetToday(){
   if(!confirm('Reset today\'s meals, exercise, and supplement check-offs?')) return;
-  S.consumed=0;S.burned=0;S.protein=0;S.exCount=0;S.exTime=0;S.meals=[];S.runs=[];S.sports=[];
+  S.consumed=0;S.burned=0;S.protein=0;S.carbs=0;S.fat=0;S.exCount=0;S.exTime=0;S.meals=[];S.runs=[];S.sports=[];S.lastMealTime=null;
   S.creatineTaken=false;S.water=0;S.supplements=S.supplements.map(function(s){return{name:s.name,taken:false};});
   renderMeals();renderRuns();renderSports();renderSupplements();updateCreatineUI();renderWater();updateToday();save();
 }
@@ -1824,6 +1953,8 @@ function init(){
     '<span class="date-day">'+now.toLocaleDateString([],{weekday:'long'})+'</span>'+
     '<span class="date-full">'+now.toLocaleDateString([],{month:'long',day:'numeric',year:'numeric'})+'</span>';
   restoreProfileUI();renderMeals();renderRuns();renderSports();renderSupplements();updateCreatineUI();renderHealthSummary();renderHealthList();renderDotTimeline();renderProgressionForm();renderWater();updateToday();fetchWeather();
+  // Update fasting timer every minute
+  setInterval(updateFasting,60000);
 }
 init();
 </script>
