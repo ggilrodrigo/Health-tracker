@@ -921,10 +921,45 @@
             <button class="btn btn-ghost btn-sm" onclick="addWater(0.5)">+500 ml</button>
             <button class="btn btn-ghost btn-sm" onclick="addWater(1.0)">+1 L</button>
           </div>
-          <button class="btn btn-danger btn-sm" onclick="resetWater()" style="font-size:10px;padding:5px 12px">Reset</button>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button class="btn btn-primary btn-sm" onclick="logWaterDaily()" style="font-size:11px">Log today's total</button>
+            <button class="btn btn-danger btn-sm" onclick="resetWater()" style="font-size:10px;padding:5px 12px">Reset</button>
+          </div>
         </div>
       </div>
-      <p class="hint">Tap the flask or use the buttons. Resets each morning.</p>
+      <p class="hint">Tap the flask or use the buttons throughout the day, then hit "Log today's total" to save it to your history.</p>
+      <div class="log-list" style="margin-top:12px">
+        <div class="log-list-label">Water history</div>
+        <div id="water-history-list"></div>
+      </div>
+    </div>
+
+    <!-- DAILY CHECK-IN -->
+    <div class="card" id="daily-checkin-card">
+      <div class="card-title">Daily check-in</div>
+      <p class="hint" style="margin-top:-8px;margin-bottom:14px">How are you feeling today? Best done after 8pm.</p>
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Energy & mood</div>
+        <div style="display:flex;gap:8px;justify-content:center" id="rating-btns">
+          <button onclick="setRating(1)" class="rating-btn" data-r="1" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface-2);font-family:'Cormorant Garamond',serif;font-size:18px;cursor:pointer;transition:all 0.15s">1</button>
+          <button onclick="setRating(2)" class="rating-btn" data-r="2" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface-2);font-family:'Cormorant Garamond',serif;font-size:18px;cursor:pointer;transition:all 0.15s">2</button>
+          <button onclick="setRating(3)" class="rating-btn" data-r="3" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface-2);font-family:'Cormorant Garamond',serif;font-size:18px;cursor:pointer;transition:all 0.15s">3</button>
+          <button onclick="setRating(4)" class="rating-btn" data-r="4" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface-2);font-family:'Cormorant Garamond',serif;font-size:18px;cursor:pointer;transition:all 0.15s">4</button>
+          <button onclick="setRating(5)" class="rating-btn" data-r="5" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface-2);font-family:'Cormorant Garamond',serif;font-size:18px;cursor:pointer;transition:all 0.15s">5</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);font-style:italic;margin-top:6px;padding:0 4px">
+          <span>rough day</span><span>feeling great</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <textarea id="checkin-notes" placeholder="e.g. Good energy after training, slept well, felt strong on the run…" style="min-height:72px"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="saveCheckin()" style="margin-top:12px">Save check-in</button>
+      <div class="log-list">
+        <div class="log-list-label">Recent check-ins</div>
+        <div id="checkin-list"></div>
+      </div>
     </div>
   </div>
 
@@ -1237,6 +1272,8 @@ function save(){
     localStorage.setItem(K.date,todayStr());
     localStorage.setItem(K.log,JSON.stringify({consumed:S.consumed,burned:S.burned,protein:S.protein,carbs:S.carbs,fat:S.fat,exCount:S.exCount,exTime:S.exTime,meals:S.meals,runs:S.runs,sports:S.sports,water:S.water,lastMealTime:S.lastMealTime}));
     localStorage.setItem(K.prog,JSON.stringify(S.progression));
+    if(S.waterHistory) localStorage.setItem('ht_water_history',JSON.stringify(S.waterHistory));
+    if(S.checkins) localStorage.setItem('ht_checkins',JSON.stringify(S.checkins));
     var todayEntry={date:todayStr(),netCal:S.consumed-S.burned,workouts:S.exCount,meals:S.meals.length};
     var existing=S.dailyHistory.findIndex(function(e){return e.date===todayStr();});
     if(existing>=0) S.dailyHistory[existing]=todayEntry;
@@ -1261,6 +1298,8 @@ function load(){
     try{var c=localStorage.getItem(K.creatine);if(c){var cd=JSON.parse(c);S.creatineTaken=cd.date===today?cd.taken:false;}}catch(e){}
     try{var tl=localStorage.getItem(K.log);if(tl){var d=JSON.parse(tl);S.consumed=d.consumed||0;S.burned=d.burned||0;S.protein=d.protein||0;S.carbs=d.carbs||0;S.fat=d.fat||0;S.exCount=d.exCount||0;S.exTime=d.exTime||0;S.meals=d.meals||[];S.runs=d.runs||[];S.sports=d.sports||[];S.water=d.water||0;S.lastMealTime=d.lastMealTime||null;}}catch(e){}
   }
+  try{var wh=localStorage.getItem('ht_water_history');if(wh) S.waterHistory=JSON.parse(wh);}catch(e){}
+  try{var ci=localStorage.getItem('ht_checkins');if(ci) S.checkins=JSON.parse(ci);}catch(e){}
   // Auto-load Rod's profile if none saved yet
   if(!S.profile){
     S.profile={bmr:1780,tdee:2760,goal:2450,age:23,sex:'m',ht:70,wt:157.5,act:1.55,def:300};
@@ -1472,24 +1511,36 @@ function logMeal(){
   var type=document.getElementById('m-type').value;
   var mtime=document.getElementById('m-time').value;
   if(!desc&&!cal){alert('Please describe your meal or enter calories.');return;}
-  // Use custom time if provided, else current time
   var timeStr=mtime||new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  // Record lastMealTime as timestamp for fasting calculation
   if(mtime){
-    var today=new Date();
-    var parts=mtime.split(':');
-    today.setHours(+parts[0],+parts[1],0,0);
-    S.lastMealTime=today.getTime();
+    var today=new Date();var parts=mtime.split(':');
+    today.setHours(+parts[0],+parts[1],0,0);S.lastMealTime=today.getTime();
+  } else { S.lastMealTime=Date.now(); }
+
+  if(editingMealIndex!==null){
+    // Edit mode — subtract old values, replace entry
+    var old=S.meals[editingMealIndex];
+    S.consumed=Math.max(0,S.consumed-(old.cal||0)+cal);
+    S.protein=Math.max(0,S.protein-(old.prot||0)+prot);
+    S.carbs=Math.max(0,S.carbs-(old.carbs||0)+carbs);
+    S.fat=Math.max(0,S.fat-(old.fat||0)+fat);
+    S.meals[editingMealIndex]={desc,portion,quality,cal,prot,carbs,fat,type,time:timeStr};
+    editingMealIndex=null;
   } else {
-    S.lastMealTime=Date.now();
+    S.consumed+=cal;S.protein+=prot;S.carbs+=carbs;S.fat+=fat;
+    S.meals.push({desc,portion,quality,cal,prot,carbs,fat,type,time:timeStr});
   }
-  S.consumed+=cal;S.protein+=prot;S.carbs+=carbs;S.fat+=fat;
-  S.meals.push({desc,portion,quality,cal,prot,carbs,fat,type,time:timeStr});
+
   document.getElementById('m-desc').value='';document.getElementById('m-photo').value='';
   document.getElementById('m-portion').value='';document.getElementById('m-quality').value='';
   document.getElementById('m-time').value='';
   ['m-cal','m-prot','m-carbs','m-fat','m-cal-m','m-prot-m','m-carbs-m','m-fat-m'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('ai-box').classList.remove('show');
+  // Reset button
+  var btn=document.querySelector('#tab-nutrition .btn-primary');
+  if(btn){btn.textContent='Save meal';btn.style.background='var(--maroon)';}
+  manualMode=false;document.getElementById('manual-box').style.display='none';
+  document.getElementById('manual-btn').textContent='Enter numbers manually';
   renderMeals();updateToday();save();
 }
 function renderMeals(){
@@ -1505,10 +1556,11 @@ function renderMeals(){
     var qualStr=m.quality&&qualityEmoji[m.quality]?' '+qualityEmoji[m.quality]:'';
     var macroStr=(m.prot?m.prot+'p ':'')+(m.carbs?m.carbs+'c ':'')+(m.fat?m.fat+'f':'');
     d.innerHTML='<span class="log-item-l">'+m.type+qualStr+' · '+desc+portionStr+'</span>'
-      +'<span class="log-item-r" style="display:flex;align-items:center;gap:10px">'
+      +'<span class="log-item-r" style="display:flex;align-items:center;gap:8px">'
       +'<span style="text-align:right">'+(m.cal?m.cal.toLocaleString()+' kcal':'—')+'<br>'
       +'<span style="font-size:10px;color:var(--text-muted)">'+macroStr+'</span>'
       +' '+m.time+'</span>'
+      +'<button onclick="editMeal('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Edit">✎</button>'
       +'<button onclick="deleteMeal('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Delete">✕</button>'
       +'</span>';
     list.appendChild(d);
@@ -1521,9 +1573,95 @@ function deleteMeal(i){
   S.carbs=Math.max(0,S.carbs-(m.carbs||0));
   S.fat=Math.max(0,S.fat-(m.fat||0));
   S.meals.splice(i,1);
-  // recalculate lastMealTime from remaining meals
   if(S.meals.length===0) S.lastMealTime=null;
   renderMeals();updateToday();save();
+}
+var editingMealIndex=null;
+function editMeal(i){
+  var m=S.meals[i];
+  editingMealIndex=i;
+  document.getElementById('m-desc').value=m.desc||'';
+  document.getElementById('m-portion').value=m.portion||'';
+  document.getElementById('m-quality').value=m.quality||'';
+  document.getElementById('m-type').value=m.type||'Breakfast';
+  document.getElementById('m-time').value='';
+  manualMode=true;
+  document.getElementById('manual-box').style.display='block';
+  document.getElementById('manual-btn').textContent='Use AI estimate instead';
+  document.getElementById('m-cal-m').value=m.cal||'';
+  document.getElementById('m-prot-m').value=m.prot||'';
+  document.getElementById('m-carbs-m').value=m.carbs||'';
+  document.getElementById('m-fat-m').value=m.fat||'';
+  document.getElementById('ai-box').classList.remove('show');
+  // Change button to Update
+  var btn=document.querySelector('#tab-nutrition .btn-primary');
+  if(btn){btn.textContent='Update meal';btn.style.background='var(--gold)';}
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── WATER LOG
+function logWaterDaily(){
+  if(S.water===0){alert('Add some water first using the buttons.');return;}
+  var entry={date:new Date().toLocaleDateString(),liters:S.water};
+  if(!S.waterHistory) S.waterHistory=[];
+  // replace today's entry if exists
+  var idx=S.waterHistory.findIndex(function(e){return e.date===entry.date;});
+  if(idx>=0) S.waterHistory[idx]=entry; else S.waterHistory.push(entry);
+  if(S.waterHistory.length>30) S.waterHistory=S.waterHistory.slice(-30);
+  renderWaterHistory();save();
+}
+function renderWaterHistory(){
+  var list=document.getElementById('water-history-list');
+  if(!list) return;
+  if(!S.waterHistory||!S.waterHistory.length){list.innerHTML='<div class="log-empty">No daily totals logged yet</div>';return;}
+  list.innerHTML='';
+  S.waterHistory.slice().reverse().forEach(function(e){
+    var d=document.createElement('div');d.className='log-item';
+    d.innerHTML='<span class="log-item-l">'+e.date+'</span><span class="log-item-r">'+e.liters.toFixed(1)+' L</span>';
+    list.appendChild(d);
+  });
+}
+
+// ── DAILY CHECK-IN
+var selectedRating=null;
+function setRating(r){
+  selectedRating=r;
+  document.querySelectorAll('.rating-btn').forEach(function(btn){
+    var isSelected=+btn.getAttribute('data-r')===r;
+    btn.style.background=isSelected?'var(--maroon)':'var(--surface-2)';
+    btn.style.color=isSelected?'#FDF7EC':'var(--text-primary)';
+    btn.style.borderColor=isSelected?'var(--maroon)':'var(--border)';
+  });
+}
+function saveCheckin(){
+  if(!selectedRating){alert('Please select a rating first.');return;}
+  var notes=document.getElementById('checkin-notes').value;
+  var entry={date:new Date().toLocaleDateString(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),rating:selectedRating,notes:notes};
+  if(!S.checkins) S.checkins=[];
+  S.checkins.push(entry);
+  if(S.checkins.length>60) S.checkins=S.checkins.slice(-60);
+  document.getElementById('checkin-notes').value='';
+  selectedRating=null;
+  document.querySelectorAll('.rating-btn').forEach(function(btn){
+    btn.style.background='var(--surface-2)';btn.style.color='var(--text-primary)';btn.style.borderColor='var(--border)';
+  });
+  renderCheckins();save();
+}
+function renderCheckins(){
+  var list=document.getElementById('checkin-list');
+  if(!list) return;
+  if(!S.checkins||!S.checkins.length){list.innerHTML='<div class="log-empty">No check-ins yet</div>';return;}
+  list.innerHTML='';
+  S.checkins.slice().reverse().slice(0,7).forEach(function(e){
+    var stars='★'.repeat(e.rating)+'☆'.repeat(5-e.rating);
+    var d=document.createElement('div');d.className='log-item';
+    d.innerHTML='<span class="log-item-l" style="display:flex;flex-direction:column;gap:2px">'
+      +'<span style="color:var(--maroon);font-size:13px;letter-spacing:1px">'+stars+'</span>'
+      +(e.notes?'<span style="font-size:12px;color:var(--text-secondary);font-style:italic">'+e.notes.slice(0,50)+(e.notes.length>50?'…':'')+'</span>':'')
+      +'</span>'
+      +'<span class="log-item-r" style="font-size:11px;text-align:right">'+e.date+'<br>'+e.time+'</span>';
+    list.appendChild(d);
+  });
 }
 
 // ── SUPPLEMENTS
@@ -1952,8 +2090,7 @@ function init(){
   document.getElementById('header-date').innerHTML=
     '<span class="date-day">'+now.toLocaleDateString([],{weekday:'long'})+'</span>'+
     '<span class="date-full">'+now.toLocaleDateString([],{month:'long',day:'numeric',year:'numeric'})+'</span>';
-  restoreProfileUI();renderMeals();renderRuns();renderSports();renderSupplements();updateCreatineUI();renderHealthSummary();renderHealthList();renderDotTimeline();renderProgressionForm();renderWater();updateToday();fetchWeather();
-  // Update fasting timer every minute
+  restoreProfileUI();renderMeals();renderRuns();renderSports();renderSupplements();updateCreatineUI();renderHealthSummary();renderHealthList();renderDotTimeline();renderProgressionForm();renderWater();renderWaterHistory();renderCheckins();updateToday();fetchWeather();
   setInterval(updateFasting,60000);
 }
 init();
