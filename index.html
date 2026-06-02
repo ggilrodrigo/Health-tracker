@@ -1367,7 +1367,10 @@ async function estimateMeal(){
       throw new Error('API error '+resp.status+': '+errText);
     }
     var data=await resp.json();
-    var txt=data.content.filter(function(c){return c.type==='text';}).map(function(c){return c.text;}).join('');
+    // Handle both direct API response and wrapped response
+    var content=data.content||[];
+    if(!content.length) throw new Error('Empty response: '+JSON.stringify(data));
+    var txt=content.filter(function(c){return c.type==='text';}).map(function(c){return c.text;}).join('');
     var parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
     document.getElementById('m-cal').value=parsed.calories||'';
     document.getElementById('m-prot').value=parsed.protein||'';
