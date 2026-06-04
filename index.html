@@ -304,7 +304,64 @@
   .log-item-r { color: var(--text-secondary); font-size: 12px; text-align: right; }
   .log-empty { font-size: 13px; color: var(--text-muted); padding: 8px 0; font-style: italic; }
 
-  /* ── TODAY HERO ── */
+  /* ── REMINDER BANNERS */
+  .reminder-banner {
+    display:flex;align-items:center;gap:10px;
+    padding:10px 14px;border-radius:var(--radius-md);
+    font-family:'Crimson Text',serif;font-size:14px;
+    border:1px solid;animation:slideDown 0.3s ease;
+  }
+  @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  .reminder-banner.warn{background:#FFF8EC;border-color:#E8B84B;color:#7A5800;}
+  .reminder-banner.info{background:#F5EEF8;border-color:#9E7AB5;color:#4A2868;}
+  .reminder-banner-close{margin-left:auto;background:none;border:none;cursor:pointer;font-size:16px;color:inherit;opacity:0.6;padding:0 2px;line-height:1;}
+
+  /* ── MEAL LOG CARDS */
+  .meal-card {
+    background:var(--surface);border:1px solid var(--border-light);
+    border-radius:var(--radius-lg);margin-bottom:8px;overflow:hidden;
+    transition:box-shadow 0.15s;
+  }
+  .meal-card-header {
+    display:flex;align-items:center;padding:11px 14px;gap:10px;cursor:pointer;
+  }
+  .meal-card-header:active{background:var(--surface-2);}
+  .meal-card-cal-pill {
+    font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:500;
+    background:var(--maroon);color:#FDF7EC;
+    padding:3px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0;
+  }
+  .meal-card-name {
+    flex:1;font-family:'Crimson Text',serif;font-size:15px;
+    color:var(--text-primary);min-width:0;
+  }
+  .meal-card-name .meal-type-tag {
+    font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;
+    color:var(--text-muted);display:block;margin-bottom:1px;
+  }
+  .meal-card-desc {
+    font-size:13px;color:var(--text-secondary);font-style:italic;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .meal-card-actions {display:flex;gap:4px;flex-shrink:0;}
+  .meal-card-expand {
+    padding:0 14px 12px;border-top:1px solid var(--border-light);
+    display:none;
+  }
+  .meal-card-expand.open{display:block;}
+  .meal-macro-row {
+    display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;
+  }
+  .meal-macro-chip {
+    font-family:'Crimson Text',serif;font-size:12px;
+    background:var(--surface-2);border:1px solid var(--border-light);
+    border-radius:20px;padding:2px 10px;color:var(--text-secondary);
+  }
+
+  /* ── TWO-STEP DELETE */
+  .delete-btn-confirming {
+    color:#C0392B !important;font-weight:700;
+  }
   .today-hero { text-align: center; padding: 10px 0 28px; }
   .net-label {
     font-size: 10px;
@@ -602,6 +659,8 @@
       <div class="header-date" id="header-date"></div>
     </div>
     <div class="header-rule"></div>
+  <!-- In-app reminder banners -->
+  <div id="reminder-banners" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
     <div class="tabs">
       <button class="tab active" onclick="showTab('today')">Today</button>
       <button class="tab" onclick="showTab('nutrition')">Nutrition</button>
@@ -966,12 +1025,30 @@
   <!-- ══ SUPPLEMENTS ══ -->
   <div class="section" id="tab-supplements">
     <div class="card">
-      <div class="card-title">Morning Supplements</div>
-      <div class="supp-progress">Taken today: <strong id="supp-count">0</strong> of <strong id="supp-total">0</strong></div>
-      <div class="supp-items" id="supp-list"></div>
-      <div class="add-supp">
-        <input type="text" id="supp-input" placeholder="Add supplement — e.g. Vitamin D, Fish Oil…">
-        <button class="btn btn-primary btn-sm" onclick="addSupplement()">Add</button>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:0">Supplements</div>
+        <div style="font-size:12px;color:var(--text-secondary);font-style:italic">
+          Taken: <strong id="supp-count" style="color:var(--maroon)">0</strong> of <strong id="supp-total" style="color:var(--maroon)">0</strong>
+        </div>
+      </div>
+      <!-- AM section -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">☀️ Morning (AM)</div>
+      <div class="supp-items" id="supp-list-am" style="margin-bottom:14px"></div>
+      <!-- PM section -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">🌙 Evening (PM)</div>
+      <div class="supp-items" id="supp-list-pm" style="margin-bottom:14px"></div>
+      <!-- Add new -->
+      <div style="border-top:1px solid var(--border-light);padding-top:14px;margin-top:4px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Add supplement</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="text" id="supp-input" placeholder="e.g. Vitamin D, Fish Oil, Magnesium…"
+            style="flex:1;font-family:'Crimson Text',serif;font-size:14px;color:var(--text-primary);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);padding:9px 12px;outline:none">
+          <select id="supp-time" style="font-family:'Crimson Text',serif;font-size:13px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);padding:9px 10px;color:var(--text-primary);outline:none">
+            <option value="am">AM</option>
+            <option value="pm">PM</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="addSupplement()">Add</button>
+        </div>
       </div>
     </div>
     <div class="card">
@@ -1131,6 +1208,12 @@
       </div>
       <p class="hint" style="margin-bottom:14px;margin-top:-6px">Log every week or two — not every session. Track whether you're lifting more over time.</p>
       <div id="wl-form"></div>
+      <div class="field-group grid-2" style="margin-top:10px">
+        <div class="field">
+          <label>Calories burned (optional)</label>
+          <input type="number" id="wl-cal" placeholder="e.g. 180 — leave blank to skip">
+        </div>
+      </div>
       <button class="btn btn-primary" onclick="logProgression()">Save entry</button>
       <p class="hint">Personal records <span class="pr-badge">★ PR</span> are highlighted when you beat your previous best.</p>
     </div>
@@ -1245,7 +1328,7 @@ var K={profile:'ht_profile',date:'ht_today_date',log:'ht_today_log',supps:'ht_su
 var S={
   profile:null,supplements:[],creatineTaken:false,health:[],
   consumed:0,burned:0,protein:0,carbs:0,fat:0,exCount:0,exTime:0,
-  meals:[],runs:[],sports:[],water:0,lastMealTime:null,
+  meals:[],runs:[],sports:[],water:0,lastMealTime:null,lastDinnerTime:null,
   progression:{pullup:[],dip:[]},
   dailyHistory:[]
 };
@@ -1270,10 +1353,11 @@ function save(){
     localStorage.setItem(K.creatine,JSON.stringify({taken:S.creatineTaken,date:todayStr()}));
     localStorage.setItem(K.health,JSON.stringify(S.health));
     localStorage.setItem(K.date,todayStr());
-    localStorage.setItem(K.log,JSON.stringify({consumed:S.consumed,burned:S.burned,protein:S.protein,carbs:S.carbs,fat:S.fat,exCount:S.exCount,exTime:S.exTime,meals:S.meals,runs:S.runs,sports:S.sports,water:S.water,lastMealTime:S.lastMealTime}));
+    localStorage.setItem(K.log,JSON.stringify({consumed:S.consumed,burned:S.burned,protein:S.protein,carbs:S.carbs,fat:S.fat,exCount:S.exCount,exTime:S.exTime,meals:S.meals,runs:S.runs,sports:S.sports,water:S.water,lastMealTime:S.lastMealTime,lastDinnerTime:S.lastDinnerTime}));
     localStorage.setItem(K.prog,JSON.stringify(S.progression));
     if(S.waterHistory) localStorage.setItem('ht_water_history',JSON.stringify(S.waterHistory));
     if(S.checkins) localStorage.setItem('ht_checkins',JSON.stringify(S.checkins));
+    if(S.lastDinnerTime) localStorage.setItem('ht_last_dinner',S.lastDinnerTime);
     var todayEntry={date:todayStr(),netCal:S.consumed-S.burned,workouts:S.exCount,meals:S.meals.length};
     var existing=S.dailyHistory.findIndex(function(e){return e.date===todayStr();});
     if(existing>=0) S.dailyHistory[existing]=todayEntry;
@@ -1296,7 +1380,9 @@ function load(){
     S.creatineTaken=false;
   } else {
     try{var c=localStorage.getItem(K.creatine);if(c){var cd=JSON.parse(c);S.creatineTaken=cd.date===today?cd.taken:false;}}catch(e){}
-    try{var tl=localStorage.getItem(K.log);if(tl){var d=JSON.parse(tl);S.consumed=d.consumed||0;S.burned=d.burned||0;S.protein=d.protein||0;S.carbs=d.carbs||0;S.fat=d.fat||0;S.exCount=d.exCount||0;S.exTime=d.exTime||0;S.meals=d.meals||[];S.runs=d.runs||[];S.sports=d.sports||[];S.water=d.water||0;S.lastMealTime=d.lastMealTime||null;}}catch(e){}
+    try{var tl=localStorage.getItem(K.log);if(tl){var d=JSON.parse(tl);S.consumed=d.consumed||0;S.burned=d.burned||0;S.protein=d.protein||0;S.carbs=d.carbs||0;S.fat=d.fat||0;S.exCount=d.exCount||0;S.exTime=d.exTime||0;S.meals=d.meals||[];S.runs=d.runs||[];S.sports=d.sports||[];S.water=d.water||0;S.lastMealTime=d.lastMealTime||null;S.lastDinnerTime=d.lastDinnerTime||null;}}catch(e){}
+    // Also check permanent dinner time store (survives daily reset)
+    try{var ldt=localStorage.getItem('ht_last_dinner');if(ldt) S.lastDinnerTime=S.lastDinnerTime||+ldt;}catch(e){}
   }
   try{var wh=localStorage.getItem('ht_water_history');if(wh) S.waterHistory=JSON.parse(wh);}catch(e){}
   try{var ci=localStorage.getItem('ht_checkins');if(ci) S.checkins=JSON.parse(ci);}catch(e){}
@@ -1370,6 +1456,7 @@ function updateToday(){
   update7DaySummary();
   updateMacroBubbles();
   updateFasting();
+  updateReminderBanners();
 }
 
 // ── WEATHER
@@ -1517,6 +1604,9 @@ function logMeal(){
     today.setHours(+parts[0],+parts[1],0,0);S.lastMealTime=today.getTime();
   } else { S.lastMealTime=Date.now(); }
 
+  // Track dinner time for overnight fasting
+  if(type==='Dinner') S.lastDinnerTime=S.lastMealTime;
+
   if(editingMealIndex!==null){
     // Edit mode — subtract old values, replace entry
     var old=S.meals[editingMealIndex];
@@ -1550,21 +1640,48 @@ function renderMeals(){
   var qualityEmoji={clean:'🥦',moderate:'⚖️',cheat:'🍕'};
   S.meals.slice().reverse().forEach(function(m,ri){
     var i=S.meals.length-1-ri;
-    var d=document.createElement('div');d.className='log-item';
-    var desc=m.desc&&m.desc.length>28?m.desc.slice(0,28)+'…':m.desc||'Unnamed';
-    var portionStr=m.portion?' · '+m.portion:'';
+    var desc=m.desc||'Unnamed';
     var qualStr=m.quality&&qualityEmoji[m.quality]?' '+qualityEmoji[m.quality]:'';
-    var macroStr=(m.prot?m.prot+'p ':'')+(m.carbs?m.carbs+'c ':'')+(m.fat?m.fat+'f':'');
-    d.innerHTML='<span class="log-item-l">'+m.type+qualStr+' · '+desc+portionStr+'</span>'
-      +'<span class="log-item-r" style="display:flex;align-items:center;gap:8px">'
-      +'<span style="text-align:right">'+(m.cal?m.cal.toLocaleString()+' kcal':'—')+'<br>'
-      +'<span style="font-size:10px;color:var(--text-muted)">'+macroStr+'</span>'
-      +' '+m.time+'</span>'
-      +'<button onclick="editMeal('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Edit">✎</button>'
-      +'<button onclick="deleteMeal('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Delete">✕</button>'
-      +'</span>';
+    var d=document.createElement('div');d.className='meal-card';
+    var macroChips='';
+    if(m.prot) macroChips+='<span class="meal-macro-chip">'+m.prot+'g protein</span>';
+    if(m.carbs) macroChips+='<span class="meal-macro-chip">'+m.carbs+'g carbs</span>';
+    if(m.fat) macroChips+='<span class="meal-macro-chip">'+m.fat+'g fat</span>';
+    if(m.portion) macroChips+='<span class="meal-macro-chip">'+m.portion+'</span>';
+    d.innerHTML=
+      '<div class="meal-card-header" onclick="toggleMealExpand(this)">'
+        +'<div class="meal-card-name">'
+          +'<span class="meal-type-tag">'+m.type+qualStr+' · '+m.time+'</span>'
+          +'<span class="meal-card-desc">'+desc+'</span>'
+        +'</div>'
+        +'<span class="meal-card-cal-pill">'+(m.cal?m.cal.toLocaleString():0)+' kcal</span>'
+        +'<div class="meal-card-actions">'
+          +'<button onclick="event.stopPropagation();editMeal('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:4px;line-height:1" title="Edit">✎</button>'
+          +'<button id="del-meal-'+i+'" onclick="event.stopPropagation();confirmDeleteMeal('+i+',this)" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:4px;line-height:1" title="Delete">✕</button>'
+        +'</div>'
+      +'</div>'
+      +(macroChips?'<div class="meal-card-expand"><div class="meal-macro-row">'+macroChips+'</div></div>':'');
     list.appendChild(d);
   });
+}
+function toggleMealExpand(header){
+  var expand=header.parentElement.querySelector('.meal-card-expand');
+  if(expand) expand.classList.toggle('open');
+}
+var deleteMealPending={};
+function confirmDeleteMeal(i,btn){
+  if(deleteMealPending[i]){
+    deleteMeal(i);
+    delete deleteMealPending[i];
+  } else {
+    deleteMealPending[i]=true;
+    btn.textContent='✕ confirm';
+    btn.classList.add('delete-btn-confirming');
+    setTimeout(function(){
+      delete deleteMealPending[i];
+      if(btn.parentElement){btn.textContent='✕';btn.classList.remove('delete-btn-confirming');}
+    },2500);
+  }
 }
 function deleteMeal(i){
   var m=S.meals[i];
@@ -1665,25 +1782,40 @@ function renderCheckins(){
 }
 
 // ── SUPPLEMENTS
-function addSupplement(){var inp=document.getElementById('supp-input'),n=inp.value.trim();if(!n) return;S.supplements.push({name:n,taken:false});inp.value='';renderSupplements();save();}
+function addSupplement(){
+  var inp=document.getElementById('supp-input'),n=inp.value.trim();
+  var time=document.getElementById('supp-time').value||'am';
+  if(!n) return;
+  S.supplements.push({name:n,taken:false,time:time});
+  inp.value='';renderSupplements();save();
+}
 document.getElementById('supp-input').addEventListener('keydown',function(e){if(e.key==='Enter') addSupplement();});
 function renderSupplements(){
-  var list=document.getElementById('supp-list'),taken=S.supplements.filter(function(s){return s.taken;}).length;
-  document.getElementById('supp-count').textContent=taken;document.getElementById('supp-total').textContent=S.supplements.length;
-  if(!S.supplements.length){list.innerHTML='<div class="log-empty">No supplements added yet — add them below.</div>';return;}
-  list.innerHTML='';
-  S.supplements.forEach(function(s,i){
-    var div=document.createElement('div');div.className='supp-item'+(s.taken?' checked':'');
-    div.innerHTML='<div class="supp-left" style="cursor:pointer" onclick="toggleSupp('+i+')">'
-      +'<div class="supp-check">✓</div>'
-      +'<div class="supp-name">'+s.name+'</div>'
-      +'</div>'
-      +'<div style="display:flex;align-items:center;gap:10px">'
-      +'<span class="supp-status">'+(s.taken?'Taken ✓':'Tap to mark taken')+'</span>'
-      +'<button onclick="deleteSupp('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Remove">✕</button>'
-      +'</div>';
-    list.appendChild(div);
-  });
+  var amList=document.getElementById('supp-list-am');
+  var pmList=document.getElementById('supp-list-pm');
+  var taken=S.supplements.filter(function(s){return s.taken;}).length;
+  document.getElementById('supp-count').textContent=taken;
+  document.getElementById('supp-total').textContent=S.supplements.length;
+  function buildList(el,filterTime){
+    var filtered=S.supplements.filter(function(s){return (s.time||'am')===filterTime;});
+    if(!filtered.length){el.innerHTML='<div class="log-empty" style="font-size:12px;padding:6px 0">None added yet</div>';return;}
+    el.innerHTML='';
+    filtered.forEach(function(s){
+      var i=S.supplements.indexOf(s);
+      var div=document.createElement('div');div.className='supp-item'+(s.taken?' checked':'');
+      div.innerHTML='<div class="supp-left" style="cursor:pointer" onclick="toggleSupp('+i+')">'
+        +'<div class="supp-check">✓</div>'
+        +'<div class="supp-name">'+s.name+'</div>'
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:10px">'
+        +'<span class="supp-status">'+(s.taken?'Taken ✓':'Tap to mark taken')+'</span>'
+        +'<button onclick="deleteSupp('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Remove">✕</button>'
+        +'</div>';
+      el.appendChild(div);
+    });
+  }
+  buildList(amList,'am');
+  buildList(pmList,'pm');
 }
 function toggleSupp(i){S.supplements[i].taken=!S.supplements[i].taken;renderSupplements();updateToday();save();}
 function deleteSupp(i){S.supplements.splice(i,1);renderSupplements();updateToday();save();}
@@ -1814,7 +1946,10 @@ function logProgression(){
     if(w&&r){S.progression[ex.key].push({weight:+w,reps:+r,notes:document.getElementById('wl-'+ex.key+'-n').value,date:today});any=true;}
   });
   if(!any){alert('Please fill in at least one exercise.');return;}
-  renderProgressionForm();save();
+  var cal=+document.getElementById('wl-cal').value||0;
+  if(cal){S.burned+=cal;S.exCount++;S.exTime+=30;}
+  document.getElementById('wl-cal').value='';
+  renderProgressionForm();updateToday();save();
 }
 function deleteProgEntry(key,i){
   S.progression[key].splice(i,1);
@@ -1886,7 +2021,7 @@ function renderHealthList(){
     d.innerHTML='<span class="log-item-l">'+left+'</span>'
       +'<span class="log-item-r" style="display:flex;align-items:center;gap:10px">'
       +'<span>'+h.date+'</span>'
-      +'<button onclick="deleteHealth('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Delete">✕</button>'
+      +'<button id="del-health-'+i+'" onclick="confirmDeleteHealth('+i+',this)" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0" title="Delete">✕</button>'
       +'</span>';
     list.appendChild(d);
   });
@@ -1984,7 +2119,42 @@ function renderDotTimeline(){
   });
 }
 
-// ── MACRO BUBBLES
+// ── IN-APP REMINDER BANNERS
+var dismissedBanners={};
+function updateReminderBanners(){
+  var container=document.getElementById('reminder-banners');
+  if(!container) return;
+  var hour=new Date().getHours();
+  var banners=[];
+  // AM supplements not taken after 12pm
+  if(hour>=12){
+    var amSupps=S.supplements.filter(function(s){return (s.time||'am')==='am';});
+    var amNotTaken=amSupps.filter(function(s){return !s.taken;});
+    if(amNotTaken.length>0&&!dismissedBanners['am-supps']){
+      banners.push({id:'am-supps',type:'warn',icon:'💊',text:amNotTaken.length+' AM supplement'+(amNotTaken.length>1?'s':'')+' not yet taken — '+amNotTaken.map(function(s){return s.name;}).join(', ')});
+    }
+  }
+  // Protein under target after 6pm
+  if(hour>=18){
+    var remaining=MACROS.protein-S.protein;
+    if(remaining>0&&!dismissedBanners['protein']){
+      banners.push({id:'protein',type:'warn',icon:'🥩',text:remaining+'g of protein still to go today — '+S.protein+'g / '+MACROS.protein+'g'});
+    }
+  }
+  // Build HTML
+  container.innerHTML='';
+  banners.forEach(function(b){
+    var div=document.createElement('div');
+    div.className='reminder-banner '+b.type;
+    div.innerHTML=b.icon+' '+b.text
+      +'<button class="reminder-banner-close" onclick="dismissBanner(\''+b.id+'\')">✕</button>';
+    container.appendChild(div);
+  });
+}
+function dismissBanner(id){
+  dismissedBanners[id]=true;
+  updateReminderBanners();
+}
 function updateMacroBubbles(){
   var circ=238.76;
   function setRing(ringId,valId,current,target){
@@ -2000,18 +2170,49 @@ function updateMacroBubbles(){
   setRing('macro-fat-ring','macro-fat-val',S.fat,MACROS.fat);
 }
 
-// ── FASTING TRACKER
+// ── FASTING TRACKER — tracks overnight fast (last dinner to first meal today)
 function updateFasting(){
   var display=document.getElementById('fast-display');
   var sub=document.getElementById('fast-sub');
   if(!display||!sub) return;
-  if(!S.lastMealTime){display.textContent='—';sub.textContent='Log a meal to start tracking';return;}
-  var hrs=(Date.now()-S.lastMealTime)/3600000;
+  // Find last dinner/meal from a previous day in dailyHistory
+  // We store lastDinnerTime in state when a Dinner meal is logged
+  if(!S.lastDinnerTime){
+    display.textContent='—';
+    sub.textContent='Log dinner to track your overnight fast';
+    return;
+  }
+  // Only show if it was from a previous day
+  var dinnerDate=new Date(S.lastDinnerTime);
+  var today=new Date();
+  var isSameDay=dinnerDate.toDateString()===today.toDateString();
+  if(isSameDay){
+    display.textContent='—';
+    sub.textContent='Overnight fast will show after today\'s dinner';
+    return;
+  }
+  var hrs=(Date.now()-S.lastDinnerTime)/3600000;
   display.textContent=hrs.toFixed(1);
-  if(hrs<4) sub.textContent='Recently eaten — digesting';
-  else if(hrs<8) sub.textContent='Light fast in progress';
-  else if(hrs<12) sub.textContent='Good fasting window';
-  else sub.textContent='Extended fast — consider eating soon';
+  if(hrs<12) sub.textContent='Overnight fast in progress';
+  else if(hrs<16) sub.textContent='Good fast — consider eating soon';
+  else sub.textContent='Extended fast — time to eat';
+}
+
+// ── HEALTH TWO-STEP DELETE
+var deleteHealthPending={};
+function confirmDeleteHealth(i,btn){
+  if(deleteHealthPending[i]){
+    deleteHealth(i);
+    delete deleteHealthPending[i];
+  } else {
+    deleteHealthPending[i]=true;
+    btn.textContent='✕ confirm';
+    btn.classList.add('delete-btn-confirming');
+    setTimeout(function(){
+      delete deleteHealthPending[i];
+      if(btn.parentElement){btn.textContent='✕';btn.classList.remove('delete-btn-confirming');}
+    },2500);
+  }
 }
 
 // ── STREAK
@@ -2091,7 +2292,7 @@ function init(){
     '<span class="date-day">'+now.toLocaleDateString([],{weekday:'long'})+'</span>'+
     '<span class="date-full">'+now.toLocaleDateString([],{month:'long',day:'numeric',year:'numeric'})+'</span>';
   restoreProfileUI();renderMeals();renderRuns();renderSports();renderSupplements();updateCreatineUI();renderHealthSummary();renderHealthList();renderDotTimeline();renderProgressionForm();renderWater();renderWaterHistory();renderCheckins();updateToday();fetchWeather();
-  setInterval(updateFasting,60000);
+  setInterval(function(){updateFasting();updateReminderBanners();},60000);
 }
 init();
 </script>
