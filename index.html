@@ -1650,12 +1650,12 @@ function renderMeals(){
     if(m.portion) macroChips+='<span class="meal-macro-chip">'+m.portion+'</span>';
     d.innerHTML=
       '<div class="meal-card-header" onclick="toggleMealExpand(this)">'
-        +'<div class="meal-card-name">'
+        +'<div class="meal-card-name" style="flex:1;min-width:0">'
           +'<span class="meal-type-tag">'+m.type+qualStr+' · '+m.time+'</span>'
-          +'<span class="meal-card-desc">'+desc+'</span>'
+          +'<span class="meal-card-desc" style="display:block;white-space:normal;word-break:break-word;line-height:1.35">'+desc+'</span>'
+          +'<span class="meal-card-cal-pill" style="display:inline-block;margin-top:6px">'+(m.cal?m.cal.toLocaleString():0)+' kcal</span>'
         +'</div>'
-        +'<span class="meal-card-cal-pill">'+(m.cal?m.cal.toLocaleString():0)+' kcal</span>'
-        +'<div class="meal-card-actions">'
+        +'<div class="meal-card-actions" style="align-self:flex-start;padding-top:2px;flex-shrink:0">'
           +'<button onclick="event.stopPropagation();editMeal('+i+')" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:4px;line-height:1" title="Edit">✎</button>'
           +'<button id="del-meal-'+i+'" onclick="event.stopPropagation();confirmDeleteMeal('+i+',this)" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:4px;line-height:1" title="Delete">✕</button>'
         +'</div>'
