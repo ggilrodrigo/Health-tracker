@@ -304,6 +304,28 @@
   .log-item-r { color: var(--text-secondary); font-size: 12px; text-align: right; }
   .log-empty { font-size: 13px; color: var(--text-muted); padding: 8px 0; font-style: italic; }
 
+  /* ── MY FOODS */
+  .food-chip {
+    display:inline-flex;align-items:center;gap:6px;
+    padding:6px 12px;border-radius:20px;
+    background:var(--surface-2);border:1px solid var(--border);
+    font-family:'Crimson Text',serif;font-size:13px;color:var(--text-primary);
+    cursor:pointer;transition:all 0.15s;white-space:nowrap;
+  }
+  .food-chip:active{background:var(--maroon-light);border-color:var(--maroon);}
+  .food-chip-del{
+    background:none;border:none;color:var(--text-muted);
+    font-size:12px;cursor:pointer;padding:0 0 0 2px;line-height:1;
+  }
+  .save-food-btn{
+    display:inline-flex;align-items:center;gap:5px;
+    background:none;border:1px dashed var(--border);border-radius:20px;
+    padding:5px 12px;font-family:'Crimson Text',serif;font-size:12px;
+    color:var(--text-muted);cursor:pointer;margin-top:8px;
+    transition:all 0.15s;
+  }
+  .save-food-btn:active{border-color:var(--gold);color:var(--gold);}
+
   /* ── REMINDER BANNERS */
   .reminder-banner {
     display:flex;align-items:center;gap:10px;
@@ -820,15 +842,22 @@
 
     <div class="card">
       <div class="card-title">Daily Grub</div>
+
+      <!-- MY FOODS QUICK-ADD -->
+      <div id="my-foods-panel" style="margin-bottom:14px;display:none">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">My Foods — tap to pre-fill</div>
+        <div id="my-foods-chips" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+      </div>
+
       <div class="field-group grid-2">
         <div class="field">
           <label>What did you eat?</label>
           <textarea id="m-desc" placeholder="e.g. Grilled chicken breast, white rice, side salad with olive oil — be specific for a better AI estimate"></textarea>
         </div>
         <div class="field">
-          <label>Photo (optional)</label>
-          <input type="file" id="m-photo" accept="image/*">
-          <span class="hint">A photo improves the estimate.</span>
+          <label>Photos (optional)</label>
+          <input type="file" id="m-photo" accept="image/*" multiple>
+          <span class="hint">Select multiple photos — e.g. food + nutrition label. Improves the estimate.</span>
         </div>
       </div>
       <div class="field-group grid-2">
@@ -1357,6 +1386,7 @@ function save(){
     localStorage.setItem(K.prog,JSON.stringify(S.progression));
     if(S.waterHistory) localStorage.setItem('ht_water_history',JSON.stringify(S.waterHistory));
     if(S.checkins) localStorage.setItem('ht_checkins',JSON.stringify(S.checkins));
+    if(S.myFoods) localStorage.setItem('ht_my_foods',JSON.stringify(S.myFoods));
     if(S.lastDinnerTime) localStorage.setItem('ht_last_dinner',S.lastDinnerTime);
     var todayEntry={date:todayStr(),netCal:S.consumed-S.burned,workouts:S.exCount,meals:S.meals.length};
     var existing=S.dailyHistory.findIndex(function(e){return e.date===todayStr();});
@@ -1384,6 +1414,7 @@ function load(){
     // Also check permanent dinner time store (survives daily reset)
     try{var ldt=localStorage.getItem('ht_last_dinner');if(ldt) S.lastDinnerTime=S.lastDinnerTime||+ldt;}catch(e){}
   }
+  try{var mf=localStorage.getItem('ht_my_foods');if(mf) S.myFoods=JSON.parse(mf);}catch(e){}
   try{var wh=localStorage.getItem('ht_water_history');if(wh) S.waterHistory=JSON.parse(wh);}catch(e){}
   try{var ci=localStorage.getItem('ht_checkins');if(ci) S.checkins=JSON.parse(ci);}catch(e){}
   // Auto-load Rod's profile if none saved yet
@@ -1537,6 +1568,67 @@ function onSportChange(){
   updateSportEst();
 }
 
+// ── MY FOODS
+function saveToMyFoods(i){
+  var m=S.meals[i];
+  if(!m) return;
+  if(!S.myFoods) S.myFoods=[];
+  // Check for duplicate name
+  var name=m.desc||'Unnamed';
+  var exists=S.myFoods.find(function(f){return f.name===name;});
+  if(exists){alert('"'+name+'" is already in My Foods.');return;}
+  S.myFoods.push({
+    name:name,
+    cal:m.cal||0,prot:m.prot||0,carbs:m.carbs||0,fat:m.fat||0,
+    portion:m.portion||''
+  });
+  renderMyFoods();save();
+  // Brief visual feedback
+  var btn=event.target;
+  btn.textContent='✓ Saved!';
+  btn.style.color='var(--maroon)';btn.style.borderColor='var(--maroon)';
+  setTimeout(function(){btn.textContent='＋ Save to My Foods';btn.style.color='';btn.style.borderColor='';},1500);
+}
+function applyMyFood(i){
+  var f=S.myFoods[i];
+  if(!f) return;
+  // Pre-fill the form
+  document.getElementById('m-desc').value=f.name;
+  document.getElementById('m-portion').value=f.portion||'';
+  // Show manual box with macros pre-filled
+  manualMode=true;
+  document.getElementById('manual-box').style.display='block';
+  document.getElementById('manual-btn').textContent='Use AI estimate instead';
+  document.getElementById('m-cal-m').value=f.cal||'';
+  document.getElementById('m-prot-m').value=f.prot||'';
+  document.getElementById('m-carbs-m').value=f.carbs||'';
+  document.getElementById('m-fat-m').value=f.fat||'';
+  document.getElementById('ai-box').classList.remove('show');
+  // Scroll to form top
+  document.getElementById('m-desc').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function deleteMyFood(i){
+  if(!S.myFoods) return;
+  S.myFoods.splice(i,1);
+  renderMyFoods();save();
+}
+function renderMyFoods(){
+  var panel=document.getElementById('my-foods-panel');
+  var chips=document.getElementById('my-foods-chips');
+  if(!panel||!chips) return;
+  if(!S.myFoods||!S.myFoods.length){panel.style.display='none';return;}
+  panel.style.display='block';
+  chips.innerHTML='';
+  S.myFoods.forEach(function(f,i){
+    var chip=document.createElement('div');chip.className='food-chip';
+    var shortName=f.name.length>22?f.name.slice(0,22)+'…':f.name;
+    chip.innerHTML='<span onclick="applyMyFood('+i+')" style="flex:1">'+shortName+'</span>'
+      +'<span style="font-size:10px;color:var(--text-muted);font-style:italic">'+f.cal+'kcal</span>'
+      +'<button class="food-chip-del" onclick="event.stopPropagation();deleteMyFood('+i+')" title="Remove">✕</button>';
+    chips.appendChild(chip);
+  });
+}
+
 // ── AI MEAL ESTIMATOR
 function toggleManual(){
   manualMode=!manualMode;
@@ -1545,25 +1637,25 @@ function toggleManual(){
   document.getElementById('manual-btn').textContent=manualMode?'Use AI estimate instead':'Enter numbers manually';
 }
 async function estimateMeal(){
-  var desc=document.getElementById('m-desc').value.trim(),photo=document.getElementById('m-photo').files[0];
-  if(!desc&&!photo){alert('Please describe your meal or upload a photo first.');return;}
+  var desc=document.getElementById('m-desc').value.trim();
+  var photos=document.getElementById('m-photo').files;
+  if(!desc&&!photos.length){alert('Please describe your meal or upload a photo first.');return;}
   var btn=document.getElementById('ai-btn');btn.disabled=true;btn.textContent='Estimating…';
   var box=document.getElementById('ai-box'),note=document.getElementById('ai-note');
   box.classList.add('show');note.textContent='Analyzing your meal…';
   try{
     var content=[];
-    if(photo){
-      var b64=await new Promise(function(res,rej){
-        var r=new FileReader();
-        r.onload=function(){res(r.result.split(',')[1]);};
-        r.onerror=rej;
-        r.readAsDataURL(photo);
-      });
+    for(var pi=0;pi<photos.length;pi++){
+      var photo=photos[pi];
+      var b64=await new Promise((function(p){return function(res,rej){
+        var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(p);
+      };})(photo));
       content.push({type:'image',source:{type:'base64',media_type:photo.type||'image/jpeg',data:b64}});
     }
     var portion=document.getElementById('m-portion').value.trim();
     var portionNote=portion?', portion/serving size: '+portion:'';
-    content.push({type:'text',text:'Estimate the nutritional content of this meal'+(desc?': '+desc:'')+portionNote+'. Return ONLY valid JSON with keys: calories (number), protein (number in grams), carbs (number in grams), fat (number in grams), note (one concise sentence). No markdown, no extra text.'});
+    var photoNote=photos.length>1?' ('+photos.length+' photos provided — one or more may be nutrition labels, use them for exact values)':'';
+    content.push({type:'text',text:'Estimate the nutritional content of this meal'+(desc?': '+desc:'')+portionNote+photoNote+'. Return ONLY valid JSON with keys: calories (number), protein (number in grams), carbs (number in grams), fat (number in grams), note (one concise sentence). No markdown, no extra text.'});
     var resp=await fetch('https://restless-mountain-ddf7.rodrigilly02.workers.dev',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:300,messages:[{role:'user',content:content}]})
@@ -1582,7 +1674,7 @@ async function estimateMeal(){
   }catch(e){
     console.error('Meal estimate error:',e);
     note.textContent='Could not estimate right now. Enter the numbers manually below.';
-    ['m-cal','m-prot','m-carbs'].forEach(function(id){document.getElementById(id).value='';});
+    ['m-cal','m-prot','m-carbs','m-fat'].forEach(function(id){document.getElementById(id).value='';});
     if(!manualMode) toggleManual();
   }
   btn.disabled=false;btn.textContent='✦ Estimate with AI';
@@ -1660,7 +1752,13 @@ function renderMeals(){
           +'<button id="del-meal-'+i+'" onclick="event.stopPropagation();confirmDeleteMeal('+i+',this)" style="background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:4px;line-height:1" title="Delete">✕</button>'
         +'</div>'
       +'</div>'
-      +(macroChips?'<div class="meal-card-expand"><div class="meal-macro-row">'+macroChips+'</div></div>':'');
+      +(macroChips
+        ?'<div class="meal-card-expand"><div class="meal-macro-row">'+macroChips+'</div>'
+          +'<button class="save-food-btn" onclick="event.stopPropagation();saveToMyFoods('+i+')">＋ Save to My Foods</button>'
+          +'</div>'
+        :'<div class="meal-card-expand">'
+          +'<button class="save-food-btn" onclick="event.stopPropagation();saveToMyFoods('+i+')">＋ Save to My Foods</button>'
+          +'</div>');
     list.appendChild(d);
   });
 }
@@ -2291,7 +2389,7 @@ function init(){
   document.getElementById('header-date').innerHTML=
     '<span class="date-day">'+now.toLocaleDateString([],{weekday:'long'})+'</span>'+
     '<span class="date-full">'+now.toLocaleDateString([],{month:'long',day:'numeric',year:'numeric'})+'</span>';
-  restoreProfileUI();renderMeals();renderRuns();renderSports();renderSupplements();updateCreatineUI();renderHealthSummary();renderHealthList();renderDotTimeline();renderProgressionForm();renderWater();renderWaterHistory();renderCheckins();updateToday();fetchWeather();
+  restoreProfileUI();renderMeals();renderMyFoods();renderRuns();renderSports();renderSupplements();updateCreatineUI();renderHealthSummary();renderHealthList();renderDotTimeline();renderProgressionForm();renderWater();renderWaterHistory();renderCheckins();updateToday();fetchWeather();
   setInterval(function(){updateFasting();updateReminderBanners();},60000);
 }
 init();

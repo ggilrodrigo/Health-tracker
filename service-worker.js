@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rg-health-tracker-v11';
+const CACHE_NAME = 'rg-health-tracker-v12';
 const ASSETS = [
   './',
   './index.html',
