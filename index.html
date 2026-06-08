@@ -843,10 +843,19 @@
     <div class="card">
       <div class="card-title">Daily Grub</div>
 
-      <!-- MY FOODS QUICK-ADD -->
-      <div id="my-foods-panel" style="margin-bottom:14px;display:none">
-        <div style="font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">My Foods — tap to pre-fill</div>
-        <div id="my-foods-chips" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+      <!-- MY FOODS COLLAPSIBLE -->
+      <div style="margin-bottom:14px">
+        <button onclick="toggleMyFoodsPanel()" id="my-foods-toggle-btn"
+          style="display:flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 14px;font-family:'Crimson Text',serif;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;width:100%;transition:all 0.15s">
+          <span>📋</span>
+          <span>My Foods</span>
+          <span id="my-foods-count-badge" style="display:none;background:var(--maroon);color:#FDF7EC;font-size:10px;border-radius:10px;padding:1px 7px;margin-left:2px"></span>
+          <span id="my-foods-chevron" style="margin-left:auto;font-size:11px;color:var(--text-muted);transition:transform 0.2s">▼</span>
+        </button>
+        <div id="my-foods-panel" style="display:none;margin-top:10px">
+          <div id="my-foods-chips" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+          <p class="hint" style="margin-top:8px">Tap a food to pre-fill the form. Save foods by expanding a meal entry below.</p>
+        </div>
       </div>
 
       <div class="field-group grid-2">
@@ -1592,10 +1601,8 @@ function saveToMyFoods(i){
 function applyMyFood(i){
   var f=S.myFoods[i];
   if(!f) return;
-  // Pre-fill the form
   document.getElementById('m-desc').value=f.name;
   document.getElementById('m-portion').value=f.portion||'';
-  // Show manual box with macros pre-filled
   manualMode=true;
   document.getElementById('manual-box').style.display='block';
   document.getElementById('manual-btn').textContent='Use AI estimate instead';
@@ -1604,7 +1611,13 @@ function applyMyFood(i){
   document.getElementById('m-carbs-m').value=f.carbs||'';
   document.getElementById('m-fat-m').value=f.fat||'';
   document.getElementById('ai-box').classList.remove('show');
-  // Scroll to form top
+  // Close the panel
+  var panel=document.getElementById('my-foods-panel');
+  var chevron=document.getElementById('my-foods-chevron');
+  var btn=document.getElementById('my-foods-toggle-btn');
+  if(panel) panel.style.display='none';
+  if(chevron) chevron.style.transform='';
+  if(btn){btn.style.borderColor='var(--border)';btn.style.color='var(--text-secondary)';}
   document.getElementById('m-desc').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function deleteMyFood(i){
@@ -1612,18 +1625,32 @@ function deleteMyFood(i){
   S.myFoods.splice(i,1);
   renderMyFoods();save();
 }
-function renderMyFoods(){
+function toggleMyFoodsPanel(){
   var panel=document.getElementById('my-foods-panel');
+  var chevron=document.getElementById('my-foods-chevron');
+  var btn=document.getElementById('my-foods-toggle-btn');
+  var isOpen=panel.style.display!=='none';
+  panel.style.display=isOpen?'none':'block';
+  chevron.style.transform=isOpen?'':'rotate(180deg)';
+  btn.style.borderColor=isOpen?'var(--border)':'var(--maroon)';
+  btn.style.color=isOpen?'var(--text-secondary)':'var(--maroon)';
+}
+function renderMyFoods(){
   var chips=document.getElementById('my-foods-chips');
-  if(!panel||!chips) return;
-  if(!S.myFoods||!S.myFoods.length){panel.style.display='none';return;}
-  panel.style.display='block';
+  var badge=document.getElementById('my-foods-count-badge');
+  var btn=document.getElementById('my-foods-toggle-btn');
+  if(!chips||!badge||!btn) return;
+  var count=(S.myFoods&&S.myFoods.length)||0;
+  // Update badge
+  if(count>0){badge.textContent=count;badge.style.display='inline-block';}
+  else{badge.style.display='none';}
+  if(!count){chips.innerHTML='<div class="log-empty" style="font-size:12px">No saved foods yet — save a meal below.</div>';return;}
   chips.innerHTML='';
   S.myFoods.forEach(function(f,i){
     var chip=document.createElement('div');chip.className='food-chip';
     var shortName=f.name.length>22?f.name.slice(0,22)+'…':f.name;
     chip.innerHTML='<span onclick="applyMyFood('+i+')" style="flex:1">'+shortName+'</span>'
-      +'<span style="font-size:10px;color:var(--text-muted);font-style:italic">'+f.cal+'kcal</span>'
+      +'<span style="font-size:10px;color:var(--text-muted);font-style:italic;margin:0 4px">'+f.cal+'kcal</span>'
       +'<button class="food-chip-del" onclick="event.stopPropagation();deleteMyFood('+i+')" title="Remove">✕</button>';
     chips.appendChild(chip);
   });
